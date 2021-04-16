@@ -4,6 +4,7 @@
 
 ```cpp
 /* 滑动窗口算法框架 */
+/* 滑动窗口算法框架 */
 void slidingWindow(string s, string t) {
     unordered_map<char, int> need, window;
     for (char c : t) need[c]++;
@@ -48,151 +49,157 @@ void slidingWindow(string s, string t) {
 
 > 给你一个字符串 S、一个字符串 T，请在字符串 S 里面找出：包含 T 所有字母的最小子串
 
-```go
-func minWindow(s string, t string) string {
-	// 保存滑动窗口字符集
-	win := make(map[byte]int)
-	// 保存需要的字符集
-	need := make(map[byte]int)
-	for i := 0; i < len(t); i++ {
-		need[t[i]]++
-	}
-	// 窗口
-	left := 0
-	right := 0
-	// match匹配次数
-	match := 0
-	start := 0
-	end := 0
-	min := math.MaxInt64
-	var c byte
-	for right < len(s) {
-		c = s[right]
-		right++
-		// 在需要的字符集里面，添加到窗口字符集里面
-		if need[c] != 0 {
-			win[c]++
-			// 如果当前字符的数量匹配需要的字符的数量，则match值+1
-			if win[c] == need[c] {
-				match++
-			}
-		}
+```c++
+class Solution {
+public:
+    string minWindow(string s, string t) {
+        // needs存储t的<字符,出现次数>,windows存储<s中与t中字符相同的字符,出现次数>
+        unordered_map<char, int> needs, window;
 
-		// 当所有字符数量都匹配之后，开始缩紧窗口
-		for match == len(need) {
-			// 获取结果
-			if right-left < min {
-				min = right - left
-				start = left
-				end = right
-			}
-			c = s[left]
-			left++
-			// 左指针指向不在需要字符集则直接跳过
-			if need[c] != 0 {
-				// 左指针指向字符数量和需要的字符相等时，右移之后match值就不匹配则减一
-				// 因为win里面的字符数可能比较多，如有10个A，但需要的字符数量可能为3
-				// 所以在压死骆驼的最后一根稻草时，match才减一，这时候才跳出循环
-				if win[c] == need[c] {
-					match--
-				}
-				win[c]--
-			}
-		}
-	}
-	if min == math.MaxInt64 {
-		return ""
-	}
-	return s[start:end]
-}
+        for(char c : t) needs[c]++;
+
+        int left = 0, right = 0; // 窗口
+        int match = 0; // match匹配次数
+        int start = 0, min = INT_MAX;
+        while(right < s.size()){
+            char c = s[right];
+            right++;
+            // 在需要的字符集里面，添加到窗口字符集里面
+            if(needs.count(c)){
+                window[c]++;
+                // 如果当前字符的数量匹配需要的字符的数量，则match值+1
+                if(window[c] == needs[c]){
+                    match++;
+                }
+            }
+
+            // 当所有字符数量都匹配之后，开始缩紧窗口
+            while(match == needs.size()){
+                // 获取结果
+                if(right - left < min){
+                    min = right - left;
+                    start = left;
+                }
+
+                char d = s[left];
+                left++;
+                // 左指针指向不在需要字符集则直接跳过
+                if(needs.count(d)){
+                    // 左指针指向字符数量和需要的字符相等时，右移之后match值就不匹配则减一
+                    // 因为win里面的字符数可能比较多，如有10个A，但需要的字符数量可能为3
+                    // 所以在压死骆驼的最后一根稻草时，match才减一，这时候才跳出循环
+                    if(window[d] == needs[d]){
+                        match--;
+                    }
+                    window[d]--;
+                }
+            }
+        }
+
+        if(min == INT_MAX) return "";
+
+        return s.substr(start, min);
+    }
+};
 ```
 
 [permutation-in-string](https://leetcode-cn.com/problems/permutation-in-string/)
 
 > 给定两个字符串  **s1**  和  **s2**，写一个函数来判断  **s2**  是否包含  **s1 **的排列。
 
-```go
-func checkInclusion(s1 string, s2 string) bool {
-	win := make(map[byte]int)
-	need := make(map[byte]int)
-	for i := 0; i < len(s1); i++ {
-		need[s1[i]]++
-	}
-	left := 0
-	right := 0
-	match := 0
-	for right < len(s2) {
-		c := s2[right]
-		right++
-		if need[c] != 0 {
-			win[c]++
-			if win[c] == need[c] {
-				match++
-			}
-		}
-		// 当窗口长度大于字符串长度，缩紧窗口
-		for right-left >= len(s1) {
-			// 当窗口长度和字符串匹配，并且里面每个字符数量也匹配时，满足条件
-			if match == len(need) {
-				return true
-			}
-			d := s2[left]
-			left++
-			if need[d] != 0 {
-				if win[d] == need[d] {
-					match--
-				}
-				win[d]--
-			}
-		}
-	}
-	return false
-}
+```c++
+class Solution {
+public:
+    // 固定窗口长度类型
+    bool checkInclusion(string s1, string s2) {
+        // needs存储s1的<字符,出现次数>,windows存储<s2中与s1中字符相同的字符,出现次数>
+        unordered_map<char, int> needs, window;
 
+        for(char c : s1) needs[c]++;
+
+        int left = 0, right = 0, match = 0; // 窗口 match匹配次数
+        while(right < s2.size()){
+            char c = s2[right];
+            right++;
+
+            // 在需要的字符集里面，添加到窗口字符集里面
+            if(needs.count(c)){
+                window[c]++;
+                // 如果当前字符的数量匹配需要的字符的数量，则match值+1
+                if(needs[c] == window[c]){
+                    match++;
+                }
+            }
+            // 当窗口长度大于字符串长度，缩紧窗口
+            while(right - left >= s1.size()){
+                // 当窗口长度和字符串匹配，并且里面每个字符数量也匹配时，满足条件
+                if(match == needs.size()) return true;
+
+                char d = s2[left];
+                left++;
+                // 左指针指向不在需要字符集则直接跳过
+                if(needs.count(d)){
+                  // 左指针指向字符数量和需要的字符相等时，右移之后match值就不匹配则减一
+                  // 因为win里面的字符数可能比较多，如有10个A，但需要的字符数量可能为3
+                  // 所以在压死骆驼的最后一根稻草时，match才减一，这时候才跳出循环
+                    if(window[d] == needs[d]){
+                        match--;
+                    }
+                    window[d]--; // 当前值出滑动窗口了
+                }
+            }
+        }
+
+        return false;
+    }
+};
 ```
 
 [find-all-anagrams-in-a-string](https://leetcode-cn.com/problems/find-all-anagrams-in-a-string/)
 
 > 给定一个字符串  **s **和一个非空字符串  **p**，找到  **s **中所有是  **p **的字母异位词的子串，返回这些子串的起始索引。
 
-```go
-func findAnagrams(s string, p string) []int {
-    win := make(map[byte]int)
-	need := make(map[byte]int)
-	for i := 0; i < len(p); i++ {
-		need[p[i]]++
-	}
-	left := 0
-	right := 0
-	match := 0
-    ans:=make([]int,0)
-	for right < len(s) {
-		c := s[right]
-		right++
-		if need[c] != 0 {
-			win[c]++
-			if win[c] == need[c] {
-				match++
-			}
-		}
-		// 当窗口长度大于字符串长度，缩紧窗口
-		for right-left >= len(p) {
-			// 当窗口长度和字符串匹配，并且里面每个字符数量也匹配时，满足条件
-			if right-left == len(p)&& match == len(need) {
-				ans=append(ans,left)
-			}
-			d := s[left]
-			left++
-			if need[d] != 0 {
-				if win[d] == need[d] {
-					match--
-				}
-				win[d]--
-			}
-		}
-	}
-	return ans
-}
+```c++
+class Solution {
+public:
+    vector<int> findAnagrams(string s, string p) {
+        vector<int> res;
+        if(p.size() > s.size())  return res;
+
+        unordered_map<char, int> needs, window;
+        for(char c : p) needs[c]++;
+
+        int left = 0, right = 0, match = 0;
+        while(right < s.size()){
+            char c = s[right];
+            right++;
+            if(needs.count(c)){
+                window[c]++;
+                if(window[c] == needs[c]){
+                    match++;
+                }
+            }
+
+            // 当窗口长度大于字符串长度，缩紧窗口
+            while(right - left >= p.size()){
+                // 当窗口长度和字符串匹配，并且里面每个字符数量也匹配时，满足条件
+                if(right - left == p.size() && match == needs.size()){
+                    res.push_back(left);
+                }
+                char d = s[left];
+                left++;
+                if(needs.count(d)){
+                    if(window[d] == needs[d]){
+                        match--;
+                    }
+                    window[d]--;
+                }
+            }  
+        }
+
+        return res;
+    }
+};
 ```
 
 [longest-substring-without-repeating-characters](https://leetcode-cn.com/problems/longest-substring-without-repeating-characters/)
@@ -204,37 +211,33 @@ func findAnagrams(s string, p string) []int {
 > 输出: 3
 > 解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。
 
-```go
-func lengthOfLongestSubstring(s string) int {
-    // 滑动窗口核心点：1、右指针右移 2、根据题意收缩窗口 3、左指针右移更新窗口 4、根据题意计算结果
-    if len(s)==0{
-        return 0
-    }
-    win:=make(map[byte]int)
-    left:=0
-    right:=0
-    ans:=1
-    for right<len(s){
-        c:=s[right]
-        right++
-        win[c]++
-        // 缩小窗口
-        for win[c]>1{
-            d:=s[left]
-            left++
-            win[d]--
+```c++
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) {
+        if(s.empty()) return 0;
+        // 滑动窗口核心点：1、右指针右移 2、根据题意收缩窗口 3、左指针右移更新窗口 4、根据题意计算结果
+        unordered_map<char,int> window;
+
+        int left = 0, right = 0, ans = 1;
+        while(right < s.size()){
+            char c = s[right];
+            right++;
+            window[c]++;
+
+            // 缩小窗口
+            while(window[c] > 1){
+                char d = s[left];
+                left++;
+                window[d]--;
+            }
+            // 计算结果
+            ans = max(ans, right - left);
         }
-        // 计算结果
-        ans=max(right-left,ans)
+
+        return ans;
     }
-    return ans
-}
-func max(a,b int)int{
-    if a>b{
-        return a
-    }
-    return b
-}
+};
 ```
 
 ## 总结
