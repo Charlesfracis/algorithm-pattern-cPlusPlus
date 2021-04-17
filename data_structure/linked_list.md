@@ -19,18 +19,25 @@
 
 > 给定一个排序链表，删除所有重复的元素，使得每个元素只出现一次。
 
-```go
-func deleteDuplicates(head *ListNode) *ListNode {
-    current := head
-    for current != nil {
-        // 全部删除完再移动到下一个元素
-        for current.Next != nil && current.Val == current.Next.Val {
-            current.Next = current.Next.Next
+```c++
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if (!head) return head;
+
+        ListNode* curr = head;
+        while (curr->next) // 只需遍历到倒数第二个节点
+        {
+            if (curr->val == curr->next->val) // 有重复元素
+            {
+                curr->next = curr->next->next;
+            }
+            else curr = curr->next;
         }
-        current = current.Next
+
+        return head;
     }
-    return head
-}
+};
 ```
 
 ### [remove-duplicates-from-sorted-list-ii](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-list-ii/)
@@ -39,29 +46,32 @@ func deleteDuplicates(head *ListNode) *ListNode {
 
 思路：链表头结点可能被删除，所以用 dummy node 辅助删除
 
-```go
-func deleteDuplicates(head *ListNode) *ListNode {
-    if head == nil {
-        return head
-    }
-    dummy := &ListNode{Val: 0}
-    dummy.Next = head
-    head = dummy
-
-    var rmVal int
-    for head.Next != nil && head.Next.Next != nil {
-        if head.Next.Val == head.Next.Next.Val {
-            // 记录已经删除的值，用于后续节点判断
-            rmVal = head.Next.Val
-            for head.Next != nil && head.Next.Val == rmVal  {
-                head.Next = head.Next.Next
+```c++
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if (!head) return head;
+        // 由于头结点可能被删除因此需要一个指向head的哑结点
+        ListNode* dummy = new ListNode(0, head);
+        ListNode* curr = dummy;
+        
+        while (curr->next && curr->next->next)
+        {
+            if (curr->next->val == curr->next->next->val) // 发现重复值
+            {
+                int x = curr->next->val; // 记录重复的数字
+                // 删除重复的节点
+                while (curr->next && curr->next->val == x)
+                {
+                    curr->next = curr->next->next;
+                }
             }
-        } else {
-            head = head.Next
+            else curr = curr->next;
         }
+
+        return dummy->next; // 哑结点的next是头节点
     }
-    return dummy.Next
-}
+};
 ```
 
 注意点
@@ -75,22 +85,29 @@ func deleteDuplicates(head *ListNode) *ListNode {
 
 思路：用一个 prev 节点保存向前指针，temp 保存向后的临时指针
 
-```go
-func reverseList(head *ListNode) *ListNode {
-    var prev *ListNode
-    for head != nil {
-        // 保存当前head.Next节点，防止重新赋值后被覆盖
-        // 一轮之后状态：nil<-1 2->3->4
-        //              prev   head
-        temp := head.Next
-        head.Next = prev
-        // pre 移动
-        prev = head
-        // head 移动
-        head = temp
+```c++
+class Solution {
+public:
+    // 用一个 prev 节点保存向前指针，temp 保存向后的临时指针
+    ListNode* reverseList(ListNode* head) {
+
+        ListNode* pre = nullptr;
+        ListNode* cur = head;
+
+        while (cur)
+        {
+            // 保存当前head.Next节点，防止重新赋值后被覆盖
+            // 一轮之后状态：nullptr<-1 2->3->4
+            //               prev   head
+            ListNode* tmp = cur->next; //下个待考察的点
+            cur->next = pre; // 当前点反转指向pre
+            pre = cur; // pre移动到当前点
+            cur = tmp; // 移动到下个点
+        }
+
+        return pre;
     }
-    return prev
-}
+};
 ```
 
 ### [reverse-linked-list-ii](https://leetcode-cn.com/problems/reverse-linked-list-ii/)
@@ -99,45 +116,50 @@ func reverseList(head *ListNode) *ListNode {
 
 思路：先遍历到 m 处，翻转，再拼接后续，注意指针处理
 
-```go
-func reverseBetween(head *ListNode, m int, n int) *ListNode {
-    // 思路：先遍历到m处，翻转，再拼接后续，注意指针处理
-    // 输入: 1->2->3->4->5->NULL, m = 2, n = 4
-    if head == nil {
-        return head
+```c++
+class Solution {
+public:
+    void reverseLinkedList(ListNode* head)
+    {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr)
+        {
+            ListNode* temp = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = temp;
+        }
     }
-    // 头部变化所以使用dummy node
-    dummy := &ListNode{Val: 0}
-    dummy.Next = head
-    head = dummy
-    // 最开始：0->1->2->3->4->5->nil
-    var pre *ListNode
-    var i = 0
-    for i < m {
-        pre = head
-        head = head.Next
-        i++
+
+    ListNode* reverseBetween(ListNode* head, int left, int right) {
+        // 头结点可能变化, 使用哑结点
+        ListNode* dummy = new ListNode(0, head);
+
+        ListNode* pre = dummy;
+        // 第 1 步：从虚拟头节点走 left - 1 步，来到 left 节点的前一个节点
+        for (int i = 0; i < left - 1; i ++) {
+            pre = pre->next;
+        }
+        // 第 2 步：从 pre 再走 right - left + 1 步，来到 right 节点
+        ListNode* rightNode = pre;
+        for (int i = 0; i < right - left + 1; i ++) {
+            rightNode = rightNode->next;
+        }
+        // 第 3 步：切断出一个子链表（截取链表）
+        ListNode* leftNode = pre->next;
+        ListNode* curr = rightNode->next;
+        // 注意：切断链接
+        pre->next = nullptr;
+        rightNode->next = nullptr;
+        // 第 4 步：反转链表的子区间
+        reverseLinkedList(leftNode);
+        // 第 5 步：接回到原来的链表中
+        pre->next = rightNode; // 左边接到原来的右边
+        leftNode->next = curr; // 原来的左边现在的右边后面接上现在后面的
+        return dummy->next;
     }
-    // 遍历之后： 1(pre)->2(head)->3->4->5->NULL
-    // i = 1
-    var j = i
-    var next *ListNode
-    // 用于中间节点连接
-    var mid = head
-    for head != nil && j <= n {
-        // 第一次循环： 1 nil<-2 3->4->5->nil
-        temp := head.Next
-        head.Next = next
-        next = head
-        head = temp
-        j++
-    }
-    // 循环需要执行四次
-    // 循环结束：1 nil<-2<-3<-4 5(head)->nil
-    pre.Next = next
-    mid.Next = head
-    return dummy.Next
-}
+};
 ```
 
 ### [merge-two-sorted-lists](https://leetcode-cn.com/problems/merge-two-sorted-lists/)
@@ -146,34 +168,34 @@ func reverseBetween(head *ListNode, m int, n int) *ListNode {
 
 思路：通过 dummy node 链表，连接各个元素
 
-```go
-func mergeTwoLists(l1 *ListNode, l2 *ListNode) *ListNode {
-    dummy := &ListNode{Val: 0}
-    head := dummy
-    for l1 != nil && l2 != nil {
-        if l1.Val < l2.Val {
-            head.Next = l1
-            l1 = l1.Next
-        } else {
-            head.Next = l2
-            l2 = l2.Next
+```c++
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        ListNode* preHead = new ListNode(0); // 哨兵节点
+        ListNode* prev = preHead;
+
+        while (l1 && l2)
+        {
+            if (l1->val < l2->val)
+            {
+                prev->next = l1;
+                l1 = l1->next;
+            }
+            else
+            {
+                prev->next = l2;
+                l2 = l2->next;
+            }
+            prev = prev->next;
         }
-        head = head.Next
+
+        // 合并后 l1 和 l2 最多只有一个还未被合并完，直接将链表末尾指向未合并完的链表即可
+        prev->next = l1 == nullptr ? l2 : l1;
+
+        return preHead->next;
     }
-    // 连接l1 未处理完节点
-    for l1 != nil {
-        head.Next = l1
-        head = head.Next
-        l1 = l1.Next
-    }
-    // 连接l2 未处理完节点
-    for l2 != nil {
-        head.Next = l2
-        head = head.Next
-        l2 = l2.Next
-    }
-    return dummy.Next
-}
+};
 ```
 
 ### [partition-list](https://leetcode-cn.com/problems/partition-list/)
@@ -182,35 +204,35 @@ func mergeTwoLists(l1 *ListNode, l2 *ListNode) *ListNode {
 
 思路：将大于 x 的节点，放到另外一个链表，最后连接这两个链表
 
-```go
-func partition(head *ListNode, x int) *ListNode {
-    // 思路：将大于x的节点，放到另外一个链表，最后连接这两个链表
-    // check
-    if head == nil {
-        return head
-    }
-    headDummy := &ListNode{Val: 0}
-    tailDummy := &ListNode{Val: 0}
-    tail := tailDummy
-    headDummy.Next = head
-    head = headDummy
-    for head.Next != nil {
-        if head.Next.Val < x {
-            head = head.Next
-        } else {
-            // 移除<x节点
-            t := head.Next
-            head.Next = head.Next.Next
-            // 放到另外一个链表
-            tail.Next = t
-            tail = tail.Next
+```c++
+class Solution {
+public:
+    ListNode* partition(ListNode* head, int x) {
+        ListNode* small = new ListNode(0);
+        ListNode* smallHead = small;
+        ListNode* large = new ListNode(0);
+        ListNode* largeHead = large;
+
+        while (head)
+        {
+            if (head->val < x)
+            {
+                small->next = head;
+                small = small->next;
+            }
+            else
+            {
+                large->next = head;
+                large = large->next;
+            }
+            head = head->next;
         }
+
+        large->next = nullptr; // 截断large最后一个节点
+        small->next = largeHead->next; // 两端链表相接
+        return smallHead->next;
     }
-    // 拼接两个链表
-    tail.Next = nil
-    head.Next = tailDummy.Next
-    return headDummy.Next
-}
+};
 ```
 
 哑巴节点使用场景
@@ -223,64 +245,59 @@ func partition(head *ListNode, x int) *ListNode {
 
 思路：归并排序，找中点和合并操作
 
-```go
-func sortList(head *ListNode) *ListNode {
-    // 思路：归并排序，找中点和合并操作
-    return mergeSort(head)
-}
-func findMiddle(head *ListNode) *ListNode {
-    // 1->2->3->4->5
-    slow := head
-    fast := head.Next
-    // 快指针先为nil
-    for fast !=nil && fast.Next != nil {
-        fast = fast.Next.Next
-        slow = slow.Next
-    }
-    return slow
-}
-func mergeTwoLists(l1 *ListNode, l2 *ListNode) *ListNode {
-    dummy := &ListNode{Val: 0}
-    head := dummy
-    for l1 != nil && l2 != nil {
-        if l1.Val < l2.Val {
-            head.Next = l1
-            l1 = l1.Next
-        } else {
-            head.Next = l2
-            l2 = l2.Next
+```c++
+class Solution {
+public:
+    // 快慢指针找到中点
+    ListNode* findMid(ListNode* head)
+    {
+        ListNode* slow = head;
+        ListNode* fast = head;
+        ListNode* pre = nullptr;
+
+        while (fast && fast->next)
+        {
+            pre = slow;
+            slow = slow->next;
+            fast = fast->next->next;
         }
-        head = head.Next
+        // split 断开前后两边
+        pre->next = nullptr;
+        return slow;
     }
-    // 连接l1 未处理完节点
-    for l1 != nil {
-        head.Next = l1
-        head = head.Next
-        l1 = l1.Next
+    // 合并两个有序链表
+    ListNode* mergeTwoList(ListNode* l1, ListNode* l2)
+    {
+        if (!l1) return l2;
+        if (!l2) return l1;
+
+        if (l1->val < l2->val)
+        {
+            l1->next = mergeTwoList(l1->next, l2);
+            return l1;
+        }
+        else
+        {
+            l2->next = mergeTwoList(l1, l2->next);
+            return l2;
+        }
     }
-    // 连接l2 未处理完节点
-    for l2 != nil {
-        head.Next = l2
-        head = head.Next
-        l2 = l2.Next
+    // 归并排序, 分解为两个单链表有序合并
+    ListNode* mergeSort(ListNode* head)
+    {
+        if (!head->next) return head;
+
+        ListNode* mid = findMid(head);
+        ListNode* l1 = mergeSort(head);
+        ListNode* l2 = mergeSort(mid);
+        return mergeTwoList(l1, l2);
     }
-    return dummy.Next
-}
-func mergeSort(head *ListNode) *ListNode {
-    // 如果只有一个节点 直接就返回这个节点
-    if head == nil || head.Next == nil{
-        return head
+
+    ListNode* sortList(ListNode* head) {
+        if (!head) return nullptr;
+        return mergeSort(head);
     }
-    // find middle
-    middle := findMiddle(head)
-    // 断开中间节点
-    tail := middle.Next
-    middle.Next = nil
-    left := mergeSort(head)
-    right := mergeSort(tail)
-    result := mergeTwoLists(left, right)
-    return result
-}
+};
 ```
 
 注意点
@@ -296,71 +313,64 @@ func mergeSort(head *ListNode) *ListNode {
 
 思路：找到中点断开，翻转后面部分，然后合并前后两个链表
 
-```go
-func reorderList(head *ListNode)  {
-    // 思路：找到中点断开，翻转后面部分，然后合并前后两个链表
-    if head == nil {
-        return
-    }
-    mid := findMiddle(head)
-    tail := reverseList(mid.Next)
-    mid.Next = nil
-    head = mergeTwoLists(head, tail)
-}
-func findMiddle(head *ListNode) *ListNode {
-    fast := head.Next
-    slow := head
-    for fast != nil && fast.Next != nil {
-        fast = fast.Next.Next
-        slow = slow.Next
-    }
-    return slow
-}
-func mergeTwoLists(l1 *ListNode, l2 *ListNode) *ListNode {
-    dummy := &ListNode{Val: 0}
-    head := dummy
-    toggle := true
-    for l1 != nil && l2 != nil {
-        // 节点切换
-        if toggle {
-            head.Next = l1
-            l1 = l1.Next
-        } else {
-            head.Next = l2
-            l2 = l2.Next
+```c++
+class Solution {
+public:
+    // 找到中点，右半段反转，交叉合并
+    void reorderList(ListNode* head) {
+        if (!head) return;
+
+        ListNode* mid = findMid(head);
+        ListNode* l1 = head;
+        ListNode* l2 = mid->next;
+        mid->next = nullptr; // 截断
+        l2 = reverseList(l2);
+        // 交叉合并
+        ListNode* l1Temp;
+        ListNode* l2Temp;
+        while (l1 && l2)
+        {
+            l1Temp = l1->next;
+            l2Temp = l2->next;
+
+            l1->next = l2;
+            l1 = l1Temp;
+
+            l2->next = l1;
+            l2 = l2Temp;
         }
-        toggle = !toggle
-        head = head.Next
+        // l1 即是head
     }
-    // 连接l1 未处理完节点
-    for l1 != nil {
-        head.Next = l1
-        head = head.Next
-        l1 = l1.Next
+
+    ListNode* findMid(ListNode* head)
+    {
+        ListNode* slow = head;
+        ListNode* fast = head;
+        ListNode* pre = nullptr;
+
+        while (fast && fast->next)
+        {
+            pre = slow;
+            slow = slow->next;
+            fast = fast->next->next;
+        }
+        return slow;
     }
-    // 连接l2 未处理完节点
-    for l2 != nil {
-        head.Next = l2
-        head = head.Next
-        l2 = l2.Next
+
+    ListNode* reverseList(ListNode* head)
+    {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr)
+        {
+            ListNode* temp = curr->next;
+            curr->next = prev;
+            prev = curr;
+            curr = temp;
+        }
+        return prev;
     }
-    return dummy.Next
-}
-func reverseList(head *ListNode) *ListNode {
-    var prev *ListNode
-    for head != nil {
-        // 保存当前head.Next节点，防止重新赋值后被覆盖
-        // 一轮之后状态：nil<-1 2->3->4
-        //              prev   head
-        temp := head.Next
-        head.Next = prev
-        // pre 移动
-        prev = head
-        // head 移动
-        head = temp
-    }
-    return prev
-}
+};
 ```
 
 ### [linked-list-cycle](https://leetcode-cn.com/problems/linked-list-cycle/)
@@ -370,149 +380,110 @@ func reverseList(head *ListNode) *ListNode {
 思路：快慢指针，快慢指针相同则有环，证明：如果有环每走一步快慢指针距离会减 1
 ![fast_slow_linked_list](https://img.fuiboom.com/img/fast_slow_linked_list.png)
 
-```go
-func hasCycle(head *ListNode) bool {
-    // 思路：快慢指针 快慢指针相同则有环，证明：如果有环每走一步快慢指针距离会减1
-    if head == nil {
-        return false
-    }
-    fast := head.Next
-    slow := head
-    for fast != nil && fast.Next != nil {
-        // 比较指针是否相等（不要使用val比较！）
-        if fast == slow {
-            return true
+```c++
+class Solution {
+public:
+    // 快慢指针，快慢指针相同则有环，证明：如果有环每走一步快慢指针距离会减 1
+    bool hasCycle(ListNode *head) {
+        if (!head || !head->next) return false;
+
+        ListNode* slow = head;
+        ListNode* fast = head->next;
+
+        while (slow != fast)
+        {
+            if (!fast || !fast->next) return false;
+            slow = slow->next;
+            fast = fast->next->next;
         }
-        fast = fast.Next.Next
-        slow = slow.Next
+        
+        return true;
     }
-    return false
-}
+};
 ```
 
 ### [linked-list-cycle-ii](https://leetcode-cn.com/problems/linked-list-cycle-ii/)
 
 > 给定一个链表，返回链表开始入环的第一个节点。  如果链表无环，则返回  `null`。
 
-思路：快慢指针，快慢相遇之后，慢指针回到头，快慢指针步调一致一起移动，相遇点即为入环点
+思路：用一个set来存储当前遍历过的链表，有环的话则会碰到相同的节点，即入环的第一个点
 ![cycled_linked_list](https://img.fuiboom.com/img/cycled_linked_list.png)
 
-```go
-func detectCycle(head *ListNode) *ListNode {
-    // 思路：快慢指针，快慢相遇之后，慢指针回到头，快慢指针步调一致一起移动，相遇点即为入环点
-    if head == nil {
-        return head
-    }
-    fast := head.Next
-    slow := head
-
-    for fast != nil && fast.Next != nil {
-        if fast == slow {
-            // 慢指针重新从头开始移动，快指针从第一次相交点下一个节点开始移动
-            fast = head
-            slow = slow.Next // 注意
-            // 比较指针对象（不要比对指针Val值）
-            for fast != slow {
-                fast = fast.Next
-                slow = slow.Next
-            }
-            return slow
+```c++
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        unordered_set<ListNode*> visited;
+        // 有环的话会一直运行，碰到相同的就是入环的第一个点
+        while (head)
+        {
+            if (visited.count(head)) return head;
+            visited.insert(head);
+            head = head->next;
         }
-        fast = fast.Next.Next
-        slow = slow.Next
+        
+        return nullptr;
     }
-    return nil
-}
+};
 ```
-
-坑点
-
-- 指针比较时直接比较对象，不要用值比较，链表中有可能存在重复值情况
-- 第一次相交后，快指针需要从下一个节点开始和头指针一起匀速移动
-
-另外一种方式是 fast=head,slow=head
-
-```go
-func detectCycle(head *ListNode) *ListNode {
-    // 思路：快慢指针，快慢相遇之后，其中一个指针回到头，快慢指针步调一致一起移动，相遇点即为入环点
-    // nb+a=2nb+a
-    if head == nil {
-        return head
-    }
-    fast := head
-    slow := head
-
-    for fast != nil && fast.Next != nil {
-        fast = fast.Next.Next
-        slow = slow.Next
-        if fast == slow {
-            // 指针重新从头开始移动
-            fast = head
-            for fast != slow {
-                fast = fast.Next
-                slow = slow.Next
-            }
-            return slow
-        }
-    }
-    return nil
-}
-```
-
-这两种方式不同点在于，**一般用 fast=head.Next 较多**，因为这样可以知道中点的上一个节点，可以用来删除等操作。
-
-- fast 如果初始化为 head.Next 则中点在 slow.Next
-- fast 初始化为 head,则中点在 slow
 
 ### [palindrome-linked-list](https://leetcode-cn.com/problems/palindrome-linked-list/)
 
 > 请判断一个链表是否为回文链表。
 
-```go
-func isPalindrome(head *ListNode) bool {
-    // 1 2 nil
-    // 1 2 1 nil
-    // 1 2 2 1 nil
-    if head==nil{
-        return true
-    }
-    slow:=head
-    // fast如果初始化为head.Next则中点在slow.Next
-    // fast初始化为head,则中点在slow
-    fast:=head.Next
-    for fast!=nil&&fast.Next!=nil{
-        fast=fast.Next.Next
-        slow=slow.Next
-    }
+```c++
+class Solution {
+public:
 
-    tail:=reverse(slow.Next)
-    // 断开两个链表(需要用到中点前一个节点)
-    slow.Next=nil
-    for head!=nil&&tail!=nil{
-        if head.Val!=tail.Val{
-            return false
+    ListNode* findMid(ListNode* head)
+    {
+        ListNode* slow = head;
+        ListNode* fast = head;
+
+        while (fast->next && fast->next->next) //坑 都是fast
+        {
+            slow = slow->next;
+            fast = fast->next->next;
         }
-        head=head.Next
-        tail=tail.Next
-    }
-    return true
 
-}
+        return slow;
+    }
 
-func reverse(head *ListNode)*ListNode{
-    // 1->2->3
-    if head==nil{
-        return head
+    ListNode* reverseList(ListNode* head)
+    {
+        ListNode* pre = nullptr;
+        ListNode* curr = head;
+
+        while (curr)
+        {
+            ListNode* temp = curr->next;
+            curr->next = pre;
+            pre = curr;
+            curr = temp;
+        }
+
+        return pre;
     }
-    var prev *ListNode
-    for head!=nil{
-        t:=head.Next
-        head.Next=prev
-        prev=head
-        head=t
+
+    // 快慢指针找到链表中点，反转后半段链表，看是否相同
+    bool isPalindrome(ListNode* head) {
+        if (!head || !head->next) return true;
+
+        ListNode* mid = findMid(head);
+        ListNode* reverse_mid = reverseList(mid->next); //坑 next
+
+        while(reverse_mid)
+        {
+            if (reverse_mid->val != head->val) return false;
+            else{
+                reverse_mid = reverse_mid->next;
+                head = head->next;
+            }
+        }
+
+        return true;
     }
-    return prev
-}
+};
 ```
 
 ### [copy-list-with-random-pointer](https://leetcode-cn.com/problems/copy-list-with-random-pointer/)
@@ -520,49 +491,33 @@ func reverse(head *ListNode)*ListNode{
 > 给定一个链表，每个节点包含一个额外增加的随机指针，该指针可以指向链表中的任何节点或空节点。
 > 要求返回这个链表的 深拷贝。
 
-思路：1、hash 表存储指针，2、复制节点跟在原节点后面
+思路：1、hash 表存储指针，2、dfs
 
-```go
-func copyRandomList(head *Node) *Node {
-	if head == nil {
-		return head
-	}
-	// 复制节点，紧挨到到后面
-	// 1->2->3  ==>  1->1'->2->2'->3->3'
-	cur := head
-	for cur != nil {
-		clone := &Node{Val: cur.Val, Next: cur.Next}
-		temp := cur.Next
-		cur.Next = clone
-		cur = temp
-	}
-	// 处理random指针
-	cur = head
-	for cur != nil {
-		if cur.Random != nil {
-			cur.Next.Random = cur.Random.Next
-		}
-		cur = cur.Next.Next
-	}
-	// 分离两个链表
-	cur = head
-	cloneHead := cur.Next
-	for cur != nil && cur.Next != nil {
-		temp := cur.Next
-		cur.Next = cur.Next.Next
-		cur = temp
-	}
-	// 原始链表头：head 1->2->3
-	// 克隆的链表头：cloneHead 1'->2'->3'
-	return cloneHead
-}
+```c++
+class Solution {
+public:
+    // 利用哈希表储存已经遍历的节点，防止死循环
+    unordered_map<Node*, Node*> visited;
+    Node* copyRandomList(Node* head) {
+        if(!head) return head;
+
+        if(visited.find(head) != visited.end())
+            return visited[head];
+        Node* cloneNode = new Node(head->val);
+        visited[head] = cloneNode;
+
+        cloneNode->next = copyRandomList(head->next);
+        cloneNode->random = copyRandomList(head->random);
+        return cloneNode;
+    }
+};
 ```
 
 ## 总结
 
 链表必须要掌握的一些点，通过下面练习题，基本大部分的链表类的题目都是手到擒来~
 
-- null/nil 异常处理
+- nullptr 异常处理
 - dummy node 哑巴节点
 - 快慢指针
 - 插入一个节点到排序链表
