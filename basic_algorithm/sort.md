@@ -4,156 +4,124 @@
 
 ### 快速排序
 
-```go
-func QuickSort(nums []int) []int {
-    // 思路：把一个数组分为左右两段，左段小于右段
-    quickSort(nums, 0, len(nums)-1)
-    return nums
+```c++
+quick_sort(nums, 0, nums.size() - 1);
 
-}
-// 原地交换，所以传入交换索引
-func quickSort(nums []int, start, end int) {
-    if start < end {
-        // 分治法：divide
-        pivot := partition(nums, start, end)
-        quickSort(nums, 0, pivot-1)
-        quickSort(nums, pivot+1, end)
+// 思路：把一个数组分为左右两段，左段小于右段
+void quick_sort(vector<int>& nums, int l, int r)
+{
+    if (l >= r) return; // 终止条件
+
+    int i = l - 1, j = r + 1; // 左端点的左边右端点的右边开始遍历
+    int x = nums[(l + r) >> 1]; // 可以取随机数, 这边是数组里的数
+    while (i < j)
+    {
+        do i ++; while (nums[i] < x); // i左边都是小于x的数
+        do j --; while (nums[j] > x); // j右边都是大于x的数
+        if (i < j) swap(nums[i], nums[j]); // 当前nums[i]大于x，nums[j]小于x，如果i在j的左边则交换两个数的位置
     }
-}
-// 分区
-func partition(nums []int, start, end int) int {
-    // 选取最后一个元素作为基准pivot
-    p := nums[end]
-    i := start
-    // 最后一个值就是基准所以不用比较
-    for j := start; j < end; j++ {
-        if nums[j] < p {
-            swap(nums, i, j)
-            i++
-        }
-    }
-    // 把基准值换到中间
-    swap(nums, i, end)
-    return i
-}
-// 交换两个元素
-func swap(nums []int, i, j int) {
-    t := nums[i]
-    nums[i] = nums[j]
-    nums[j] = t
+    // 递归的对剩余部分进行排序
+    quick_sort(nums, l, j);
+    quick_sort(nums, j + 1, r);
 }
 ```
 
 ### 归并排序
 
-```go
-func MergeSort(nums []int) []int {
-    return mergeSort(nums)
-}
-func mergeSort(nums []int) []int {
-    if len(nums) <= 1 {
-        return nums
+```c++
+merge_sort(nums, 0, nums.size() - 1);
+
+// 分治，先排序，再合并, 需要一个额外数组
+void merge_sort(vector<int>& nums, int l, int r)
+{
+    if (l >= r) return; // 终止条件
+
+    int mid = (l + r) >> 1; // 这边是下标
+    // 先排序
+    merge_sort(nums, l, mid);
+    merge_sort(nums, mid + 1, r);
+
+    // 合并为一段
+    int k = 0, i = l, j = mid + 1;
+    vector<int> tmp(r - l + 1, 0);
+    while (i <= mid && j <= r)
+    {
+        // 按照大小顺序合并
+        if (nums[i] <= nums[j]) tmp[k ++] = nums[i ++];
+        else tmp[k ++] = nums[j ++];
     }
-    // 分治法：divide 分为两段
-    mid := len(nums) / 2
-    left := mergeSort(nums[:mid])
-    right := mergeSort(nums[mid:])
-    // 合并两段数据
-    result := merge(left, right)
-    return result
-}
-func merge(left, right []int) (result []int) {
-    // 两边数组合并游标
-    l := 0
-    r := 0
-    // 注意不能越界
-    for l < len(left) && r < len(right) {
-        // 谁小合并谁
-        if left[l] > right[r] {
-            result = append(result, right[r])
-            r++
-        } else {
-            result = append(result, left[l])
-            l++
-        }
-    }
-    // 剩余部分合并
-    result = append(result, left[l:]...)
-    result = append(result, right[r:]...)
-    return
+    // 剩余的部分合并
+    while (i <= mid) tmp[k ++] = nums[i ++];
+    while (j <= r) tmp[k ++] = nums[j ++];
+
+    // 把临时数组里的值放回原数组
+    for (int i = l, j = 0; i <= r; i ++, j ++) nums[i] = tmp[j];
 }
 ```
 
 ### 堆排序
 
-用数组表示的完美二叉树 complete binary tree
+**堆的概念**
 
-> 完美二叉树 VS 其他二叉树
+堆是用数组表示的完美二叉树 complete binary tree
 
-![image.png](https://img.fuiboom.com/img/tree_type.png)
+小根堆: 每个父节点的值都小于左右儿子
 
-[动画展示](https://www.bilibili.com/video/av18980178/)
+大根堆: 每个父节点的值都大于左右儿子
 
-![image.png](https://img.fuiboom.com/img/heap.png)
+堆的实现(小根堆):
+* 堆的存储: 1维数组, 0为根节点, 父节点是x的话, 左儿子为2x+1, 右儿子为2x+2
+* down(x)：把一个数变大了, 需要维持堆的定义的话就需要与左右儿子中小的值进行交换
 
-核心代码
+* up(x)：把一个数变小了，需要维持堆的定义的话需要与父节点(大于当前数的话)进行交换
 
-```go
-package main
+* 插入一个数: heap[ ++ size] = x; up(size);
+* 求集合中最小值: heap[0];
+* 删除最小值: heap[0] = heap[size]; size --; down(0);
+* 删除任意一个元素: heap[k] = heap[size]; size --; down(k); up(k);
+* 修改任意一个元素: heap[k] = x; down(k); up(k);
 
-func HeapSort(a []int) []int {
-    // 1、无序数组a
-	// 2、将无序数组a构建为一个大根堆
-	for i := len(a)/2 - 1; i >= 0; i-- {
-		sink(a, i, len(a))
-	}
-	// 3、交换a[0]和a[len(a)-1]
-	// 4、然后把前面这段数组继续下沉保持堆结构，如此循环即可
-	for i := len(a) - 1; i >= 1; i-- {
-		// 从后往前填充值
-		swap(a, 0, i)
-		// 前面的长度也减一
-		sink(a, 0, i)
-	}
-	return a
+```c++
+heap_sort(nums);
+
+// 小根堆
+void down(vector<int>& heap, int size, int u)
+{
+    int t = u;
+    // 如果左儿子存在并且左儿子的值小于当前的值，交换
+    if (u * 2 + 1 <= size && heap[u * 2 + 1] < heap[t]) t = u * 2 + 1;
+    // 如果右儿子存在并且右儿子值小于当前的值，交换
+    if (u * 2 + 2 <= size && heap[u * 2 + 2] < heap[t]) t = u * 2 + 2;
+    if (u != t)
+    {
+        swap(heap[u], heap[t]);
+        down(heap, size, t);
+    }
 }
-func sink(a []int, i int, length int) {
-	for {
-		// 左节点索引(从0开始，所以左节点为i*2+1)
-		l := i*2 + 1
-		// 右节点索引
-		r := i*2 + 2
-		// idx保存根、左、右三者之间较大值的索引
-		idx := i
-		// 存在左节点，左节点值较大，则取左节点
-		if l < length && a[l] > a[idx] {
-			idx = l
-		}
-		// 存在右节点，且值较大，取右节点
-		if r < length && a[r] > a[idx] {
-			idx = r
-		}
-		// 如果根节点较大，则不用下沉
-		if idx == i {
-			break
-		}
-		// 如果根节点较小，则交换值，并继续下沉
-		swap(a, i, idx)
-		// 继续下沉idx节点
-		i = idx
-	}
-}
-func swap(a []int, i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
+void heap_sort(vector<int>& nums)
+{
+    int size = nums.size() - 1;
+    // 建堆(小根堆) O(n)
+    for (int i = n / 2; i >= 0; i --) down(nums, size, i);
 
+    // 交换堆顶和末尾的数然后从堆顶down(0)
+    // 长度需要-1
+    int len = nums.size() - 1;
+    for (int i = size; i > 0; i --)
+    {
+        swap(nums[0], nums[i]);
+        len --;
+        down(nums, len, 0);
+    }
+    
+    // 正序的话用大根堆或者小根堆后反序
+    reverse(nums.begin(), nums.end());
+}
 ```
 
 ## 参考
 
 [十大经典排序](https://www.cnblogs.com/onepixel/p/7674659.html)
-
-[二叉堆](https://labuladong.gitbook.io/algo/shu-ju-jie-gou-xi-lie/er-cha-dui-xiang-jie-shi-xian-you-xian-ji-dui-lie)
 
 ## 练习
 
